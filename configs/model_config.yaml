@@ -1,0 +1,25 @@
+model:
+  name: "Hybrid Recommendation System"
+  version: "1.0.0"
+
+als:
+  latent_dim: 64
+  artifacts_dir: "artifacts/models/als"
+  user_factors_file: "user_factors.npy"
+  item_factors_file: "item_factors.npy"
+
+content:
+  artifacts_dir: "artifacts/models/content"
+  vectorizer_file: "tfidf_vectorizer.pkl"
+  matrix_file: "tfidf_matrix.pkl"
+  similarity_file: "similarity_model.pkl"
+  profiles_file: "product_profiles.csv"
+
+hybrid:
+  default_als_weight: 0.5
+  default_content_weight: 0.5
+  normalization: "minmax"
+  weights_file: "artifacts/models/hybrid/hybrid_weights.json"
+
+inference:
+  default_top_n: 10

@@ -1,0 +1,37 @@
+# Python bytecode and test tooling
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.benchmarks/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# Virtual environments and local configuration
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# IDE and operating-system files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Source datasets are not required for serving
+data/raw/
+
+# Large model artifacts and processed data are provisioned separately
+artifacts/
+data/processed/

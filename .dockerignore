@@ -1,0 +1,28 @@
+# Development and test assets
+notebooks/
+tests/
+.pytest_cache/
+.git/
+
+# Python caches and local environments
+**/__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.env
+
+# IDE and operating-system files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Training-only data. Runtime requires only the serialized mappings below.
+data/raw/
+data/processed/*
+!data/processed/mappings/
+!data/processed/mappings/*.pkl

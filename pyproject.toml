@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hybrid-recommendation-system"
+version = "1.0.0"
+description = "Production Hybrid Recommendation System combining ALS and Content-Based Filtering"
+readme = "README.md"
+requires-python = ">=3.8"
+
+dependencies = [
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "scipy>=1.7.0",
+    "scikit-learn>=1.0.0",
+    "pyyaml>=5.4.1",
+    "fastapi>=0.95.0",
+    "uvicorn>=0.20.0",
+    "pydantic>=1.10.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
