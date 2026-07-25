@@ -2,138 +2,410 @@
 
 ## Overview
 
-This project is a production-oriented recommendation service built from the RetailRocket e-commerce dataset. It combines complementary signals to recommend products for known users while retaining a popular-item fallback for cold-start traffic.
+This project is an end-to-end hybrid recommendation service built using the **RetailRocket e-commerce dataset**.
 
-The system uses ALS collaborative filtering to learn user and item latent factors from interaction history, TF-IDF content-based filtering to retrieve related products from item attributes, and a hybrid weighted-fusion strategy to combine both ranked candidate sets. The service is exposed through FastAPI and packaged for Docker deployment.
+The system combines multiple recommendation approaches to generate personalized product recommendations for users:
 
-## Architecture
+- **Collaborative Filtering** using ALS (Alternating Least Squares)
+- **Content-Based Filtering** using TF-IDF similarity
+- **Hybrid Recommendation Engine** using weighted score fusion
+- **Cold-start recommendation fallback** using popular-item recommendations
+
+The recommendation engine is deployed as a REST API using **FastAPI** and packaged using **Docker** for reproducible deployment.
+
+---
+
+# Architecture
 
 ```mermaid
 flowchart TD
-    U[User] --> API[FastAPI]
+
+    USER[User Request] --> API[FastAPI Service]
+
     API --> IE[Inference Engine]
-    IE --> HR[Hybrid Recommender]
-    HR --> ALS[ALS Model]
-    HR --> CONTENT[Content Model]
-    ALS --> UF[User Factors]
-    CONTENT --> TFIDF[TF-IDF Matrix]
-    ALS --> FUSION[Score Fusion]
-    CONTENT --> FUSION
-    FUSION --> REC[Recommendations]
+
+    IE --> HYBRID[Hybrid Recommender]
+
+    HYBRID --> ALS[ALS Collaborative Filtering]
+    HYBRID --> CONTENT[Content Based Filtering]
+
+    ALS --> USERF[User Embeddings]
+    ALS --> ITEMF[Item Embeddings]
+
+    CONTENT --> TFIDF[TF-IDF Product Features]
+    TFIDF --> SIM[Cosine Similarity]
+
+    USERF --> FUSION[Weighted Score Fusion]
+    ITEMF --> FUSION
+    SIM --> FUSION
+
+    FUSION --> OUTPUT[Top-N Recommendations]
 ```
 
-## Project Structure
+---
+
+# Project Structure
 
 ```text
-api/          FastAPI application, routes, and request/response schemas
-src/          Application package: data, inference, utilities, and model code
-src/models/   ALS, content-based, and hybrid recommender implementations
-artifacts/    Serialized inference assets, weights, and popular-item fallback
-configs/      Model, data, and deployment configuration
-tests/        Unit and API test suite
-evaluation/   Offline metrics and evaluation reports
-notebooks/    Exploratory analysis and model-development notebooks
-deployment/   Service integration and deployment support code
+Hybrid-Recommendation-System/
+
+├── api/
+│   ├── app.py
+│   ├── routes.py
+│   └── schemas.py
+│
+├── src/
+│   ├── inference/
+│   ├── models/
+│   │   ├── als/
+│   │   ├── content/
+│   │   └── hybrid/
+│   └── utils/
+│
+├── artifacts/
+│   Serialized model artifacts and inference assets
+│
+├── configs/
+│   Model and deployment configuration
+│
+├── tests/
+│   Unit and API test suite
+│
+├── evaluation/
+│   Offline evaluation metrics
+│
+├── notebooks/
+│   Exploratory analysis and experimentation
+│
+├── deployment/
+│   Deployment-related configuration
+│
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── README.md
 ```
 
-## ML Pipeline
+---
+
+# ML Pipeline
 
 ```text
+RetailRocket Dataset
+
+        ↓
+
 Data preprocessing
+
         ↓
-Feature engineering
+
+User-item interaction matrix
+
         ↓
-ALS training
+
+ALS Collaborative Filtering
+
         ↓
-Content model training
+
+Content Feature Engineering
+
         ↓
-Hybrid fusion
+
+TF-IDF Similarity Model
+
         ↓
-Inference API
+
+Hybrid Score Fusion
+
+        ↓
+
+FastAPI Inference Service
+
+        ↓
+
+Product Recommendations
 ```
 
-## Model Details
+---
 
-### ALS collaborative filtering
+# Model Details
 
-- Learns 64-dimensional latent factors for users and items.
-- Uses historical implicit interaction patterns to surface products that similar users engage with.
+## ALS Collaborative Filtering
 
-### Content-based filtering
+The collaborative filtering component uses **Alternating Least Squares** to learn latent user and item representations.
 
-- Represents product information with TF-IDF features.
-- Uses a 50,000-feature vocabulary and cosine similarity to identify related products.
+Configuration:
 
-### Hybrid recommendation
+- Latent factors: `64`
+- Regularization: `0.1`
+- Iterations: `20`
 
-- Normalizes model scores and applies weighted score fusion.
-- Default ALS weight: `0.5`.
-- Default content weight: `0.5`.
+The model learns from implicit user-item interactions such as:
 
-## Evaluation Results
+- Product views
+- Add-to-cart events
+- Transactions
+
+---
+
+## Content-Based Filtering
+
+The content model recommends products based on item similarity.
+
+Approach:
+
+- Product attributes converted into TF-IDF vectors
+- Cosine similarity used for finding similar products
+- Supports item-based recommendations
+
+For users without available interaction history:
+
+```
+User ID
+   ↓
+ALS seed item
+   ↓
+Content similarity search
+   ↓
+Similar product recommendations
+```
+
+---
+
+## Hybrid Recommendation Engine
+
+The hybrid model combines ALS and content recommendations using weighted score fusion.
+
+Default weights:
+
+```
+ALS Weight       : 0.5
+Content Weight   : 0.5
+```
+
+The final ranking combines:
+
+- Collaborative preference signals
+- Product similarity signals
+
+---
+
+# Cold Start Handling
+
+The system supports unknown users.
+
+For new users:
+
+```
+Unknown User
+      ↓
+Popular Item Ranking
+      ↓
+Recommendation List
+```
+
+This ensures recommendations are still available when user history is unavailable.
+
+---
+
+# Evaluation Results
 
 | Metric | Result |
-| --- | ---: |
+|---|---:|
 | Precision@10 | 0.0100 |
 | Recall@10 | 0.1000 |
 | Hit Rate@10 | 0.1000 |
 | Catalog Coverage | 0.0016 |
 
-## API Documentation
+---
 
-### `GET /api/v1/recommend/{user_id}`
+# API Documentation
 
-Returns up to `top_n` hybrid recommendations for a known user, or the popular-item fallback when the user is unknown.
+Interactive Swagger documentation:
 
-```bash
-curl "http://localhost:8000/api/v1/recommend/123?top_n=2"
 ```
+http://localhost:8000/docs
+```
+
+---
+
+## Health Check
+
+### Endpoint
+
+```
+GET /api/v1/health
+```
+
+Response:
 
 ```json
 {
-  "user_id": 123,
-  "recommendations": [
-    {"item_id": 456, "score": 0.8721, "source": "Hybrid"},
-    {"item_id": 789, "score": 0.8014, "source": "Hybrid"}
+  "status": "healthy",
+  "models_loaded": true
+}
+```
+
+---
+
+## Hybrid Recommendation
+
+### Endpoint
+
+```
+GET /api/v1/recommend/{user_id}
+```
+
+Returns personalized hybrid recommendations for known users.
+
+Example:
+
+```bash
+curl "http://localhost:8000/api/v1/recommend/1150086?top_n=10"
+```
+
+Response:
+
+```json
+{
+  "user_id":1150086,
+  "model_used":"HybridRecommender",
+  "recommendations":[
+    {
+      "item_id":143866,
+      "score":0.5,
+      "source":"Hybrid"
+    },
+    {
+      "item_id":87413,
+      "score":0.5,
+      "source":"Hybrid"
+    }
   ]
 }
 ```
 
-Interactive OpenAPI documentation is available at `http://localhost:8000/docs`.
+---
 
-## Local Setup
+## ALS Recommendation
+
+### Endpoint
+
+```
+POST /api/v1/recommend/als
+```
+
+Generates recommendations using collaborative filtering.
+
+---
+
+## Content Recommendation
+
+### Endpoint
+
+```
+POST /api/v1/recommend/content
+```
+
+Uses:
+
+- User interaction history when available
+- ALS generated seed item when history is unavailable
+
+---
+
+# Running Locally
+
+Clone repository:
 
 ```bash
 git clone <repository-url>
+
 cd Hybrid-Recommendation-System
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
+
+Run tests:
+
+```bash
 pytest tests/
+```
+
+Start API:
+
+```bash
 uvicorn api.app:app --reload
 ```
 
-Before testing or serving, provision the compatible model artifacts and processed mappings using the project's approved artifact store. They are intentionally excluded from source control.
+---
 
-## Docker Deployment
+# Docker Deployment
 
-Build and run the service image:
-
-```bash
-docker build -t hybrid-recommendation-system .
-docker run --rm -p 8000:8000 hybrid-recommendation-system
-```
-
-For the configured service, read-only artifact/config/data mounts, and health check:
+Build container:
 
 ```bash
-docker-compose up --build
+docker compose build
 ```
 
-See [deployment documentation](docs/deployment.md) for artifact-management guidance.
+Run service:
 
-## Future Improvements
+```bash
+docker compose up -d
+```
 
-- Online learning from new interaction events.
-- User embeddings enriched with session and behavioral signals.
-- Deep-learning recommender architectures for richer ranking.
-- A real-time feature store for low-latency personalization.
-- Managed cloud deployment with observability and autoscaling.
+Check running container:
+
+```bash
+docker ps
+```
+
+Example output:
+
+```
+hybrid_recommendation_api
+STATUS: healthy
+PORT: 8000
+```
+
+API available at:
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+# Testing
+
+The project includes automated tests covering:
+
+- ALS predictor
+- Content predictor
+- Hybrid recommender
+- API endpoints
+- Model loading
+- Cold-start handling
+- Response schema validation
+
+
+Current test status:
+
+```
+30 passed
+```
+
+---
+
+# Future Improvements
+
+- React-based recommendation dashboard
+- Real-time recommendation updates
+- Online learning from user interactions
+- Session-based recommendation models
+- Deep learning ranking models
+- Cloud deployment with monitoring and autoscaling
