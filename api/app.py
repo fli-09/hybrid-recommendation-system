@@ -53,6 +53,12 @@ app.add_middleware(
 app.include_router(router, prefix="/api/v1")
 
 
+@app.get("/")
+def root() -> dict:
+    """Lightweight service identity endpoint."""
+    return {"message": "Hybrid Recommendation API running"}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("api.app:app", host="0.0.0.0", port=8000, reload=True)

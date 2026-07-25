@@ -125,18 +125,45 @@ class InferenceEngine:
                     seen_items=seen_item_ids,
                 )
                 return [(r["item_id"], r["score"]) if isinstance(r, dict) else r for r in recs]
-            else:
-                logger.warning("Content strategy requires user_history_item_ids.")
-                return []
-        elif strategy == "hybrid":
-            return self.registry.hybrid_recommender.recommend(
+
+            als_recs = self.registry.als_predictor.predict_for_user(
                 user_id=user_id,
-                user_history_item_ids=user_history_item_ids,
-                top_n=top_n,
-                als_weight=als_weight,
-                content_weight=content_weight,
-                seen_item_ids=seen_item_ids,
+                top_n=1,
             )
+            if not als_recs:
+                return []
+
+            seed_item_id = als_recs[0][0]
+            recs = self.registry.content_predictor.recommend_similar_items(
+                item_id=seed_item_id,
+                top_n=top_n,
+            )
+            return [(r["item_id"], r["score"]) if isinstance(r, dict) else r for r in recs]
+        elif strategy == "hybrid":
+            is_known = (
+                self.registry.als_predictor is not None
+                and user_id in self.registry.als_predictor.user_to_index
+            )
+            if is_known:
+                recs = self.registry.hybrid_recommender.recommend(
+                    user_id=user_id,
+                    user_history_item_ids=user_history_item_ids,
+                    top_n=top_n,
+                    als_weight=als_weight,
+                    content_weight=content_weight,
+                    seen_item_ids=seen_item_ids,
+                )
+                if recs:
+                    return recs
+
+            logger.info(
+                f"User ID {user_id} not found or has no hybrid candidates. "
+                f"Serving {top_n} popular items fallback."
+            )
+            return [
+                (int(item["item_id"]), float(item.get("score", 1.0)))
+                for item in self.popular_items[:top_n]
+            ]
         else:
             raise ValueError(f"Unknown strategy: '{strategy}'. Choose 'hybrid', 'als', or 'content'.")
 

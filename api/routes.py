@@ -35,7 +35,7 @@ def get_inference_engine() -> InferenceEngine:
 @router.get("/health", response_model=HealthCheckResponse)
 def health_check(engine: InferenceEngine = Depends(get_inference_engine)):
     return HealthCheckResponse(
-        status="ok",
+        status="healthy",
         models_loaded=True
     )
 

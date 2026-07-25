@@ -14,8 +14,14 @@ def test_health_endpoint():
     response = client.get("/api/v1/health")
     assert response.status_code == 200
     json_data = response.json()
-    assert json_data["status"] == "ok"
+    assert json_data["status"] == "healthy"
     assert json_data["models_loaded"] is True
+
+
+def test_root_endpoint():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hybrid Recommendation API running"}
 
 
 def test_hybrid_recommend_endpoint():

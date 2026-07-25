@@ -40,5 +40,5 @@ class RecommendationResponse(BaseModel):
 
 
 class HealthCheckResponse(BaseModel):
-    status: str = Field(default="ok")
+    status: str = Field(default="healthy")
     models_loaded: bool = Field(...)

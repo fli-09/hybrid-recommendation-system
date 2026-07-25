@@ -21,7 +21,10 @@ env/
 .DS_Store
 Thumbs.db
 
-# Training-only data. Runtime requires only the serialized mappings below.
+# Model artifacts mounted at runtime
+artifacts/
+
+# Training-only data
 data/raw/
 data/processed/*
 !data/processed/mappings/
