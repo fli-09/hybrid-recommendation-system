@@ -7,4 +7,5 @@ fastapi==0.95.2
 pydantic==1.10.13
 uvicorn==0.22.0
 pytest==7.4.4
-httpx
+httpx<0.26
+starlette<0.28
