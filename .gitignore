@@ -35,3 +35,6 @@ data/raw/
 # Large model artifacts and processed data are provisioned separately
 artifacts/
 data/processed/
+
+# Python packaging metadata
+*.egg-info/

@@ -4,10 +4,11 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import yaml
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import router
+from .routes import get_inference_engine, recommend_hybrid, router
+from .schemas import RecommendationRequest, RecommendationResponse
 
 
 def _load_deployment_config() -> Dict[str, Any]:
@@ -24,9 +25,13 @@ def _load_deployment_config() -> Dict[str, Any]:
 def _allowed_origins(config: Dict[str, Any]) -> List[str]:
     configured_origins = config.get("cors", {}).get("allowed_origins", [])
     environment_origins = os.getenv("ALLOWED_ORIGINS")
+    origins = set(configured_origins)
     if environment_origins:
-        return [origin.strip() for origin in environment_origins.split(",") if origin.strip()]
-    return configured_origins
+        for origin in environment_origins.split(","):
+            origin = origin.strip()
+            if origin:
+                origins.add(origin)
+    return sorted(origins)
 
 
 deployment_config = _load_deployment_config()
@@ -51,6 +56,14 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api/v1")
+
+
+@app.post("/predict", response_model=RecommendationResponse)
+def predict_root(
+    request: RecommendationRequest,
+    engine: Any = Depends(get_inference_engine)
+) -> RecommendationResponse:
+    return recommend_hybrid(request, engine)
 
 
 @app.get("/")

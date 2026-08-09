@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen bg-surface text-slate-100;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply rounded-2xl border border-surface-border bg-surface-raised/80 backdrop-blur;
+  }
+}

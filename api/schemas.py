@@ -4,6 +4,12 @@ from pydantic import BaseModel, Field
 
 class RecommendationItem(BaseModel):
     item_id: int = Field(..., description="Recommended product item ID")
+    product_name: Optional[str] = Field(default=None, description="Product display name")
+    category: Optional[str] = Field(default=None, description="Product category")
+    brand: Optional[str] = Field(default=None, description="Product brand")
+    price: Optional[float] = Field(default=None, description="Product price")
+    image_url: Optional[str] = Field(default=None, description="Product image URL")
+    description: Optional[str] = Field(default=None, description="Product description")
     score: float = Field(..., description="Recommendation score")
     source: str = Field(..., description="Recommendation source model (e.g. Hybrid, Popular)")
 
@@ -29,7 +35,14 @@ class TextSearchRequest(BaseModel):
 
 class ItemScore(BaseModel):
     item_id: int = Field(..., description="Recommended item ID")
+    product_name: Optional[str] = Field(default=None, description="Product display name")
+    category: Optional[str] = Field(default=None, description="Product category")
+    brand: Optional[str] = Field(default=None, description="Product brand")
+    price: Optional[float] = Field(default=None, description="Product price")
+    image_url: Optional[str] = Field(default=None, description="Product image URL")
+    description: Optional[str] = Field(default=None, description="Product description")
     score: float = Field(..., description="Recommendation score")
+    source: str = Field(..., description="Recommendation source model (e.g. Hybrid, Popular)")
 
 
 class RecommendationResponse(BaseModel):

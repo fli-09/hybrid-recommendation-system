@@ -1,243 +1,92 @@
-# Hybrid Recommendation System for E-Commerce
+# Hybrid Recommendation System
 
 ## Overview
 
-This project is an end-to-end hybrid recommendation service built using the **RetailRocket e-commerce dataset**.
+A production-ready hybrid recommendation service built with Python and FastAPI. The system combines collaborative filtering (ALS) and content-based filtering (TF-IDF similarity) to deliver personalized e-commerce recommendations.
 
-The system combines multiple recommendation approaches to generate personalized product recommendations for users:
+Key capabilities:
+- Personalized recommendations for known users
+- Content-based similarity recommendations for cold-start cases
+- Hybrid score fusion across ALS and content signals
+- REST API served by FastAPI
+- Docker and Docker Compose deployment support
 
-- **Collaborative Filtering** using ALS (Alternating Least Squares)
-- **Content-Based Filtering** using TF-IDF similarity
-- **Hybrid Recommendation Engine** using weighted score fusion
-- **Cold-start recommendation fallback** using popular-item recommendations
+## Features
 
-The recommendation engine is deployed as a REST API using **FastAPI** and packaged using **Docker** for reproducible deployment.
+- ALS-based collaborative filtering
+- TF-IDF content similarity ranking
+- Weighted hybrid model with configurable weights
+- Popular-item fallback for unknown users
+- FastAPI endpoints for health checks, user recommendations, hybrid scoring, and text search
+- Artifact-driven inference with serialized model assets
 
----
-
-# Architecture
-
-```mermaid
-flowchart TD
-
-    USER[User Request] --> API[FastAPI Service]
-
-    API --> IE[Inference Engine]
-
-    IE --> HYBRID[Hybrid Recommender]
-
-    HYBRID --> ALS[ALS Collaborative Filtering]
-    HYBRID --> CONTENT[Content Based Filtering]
-
-    ALS --> USERF[User Embeddings]
-    ALS --> ITEMF[Item Embeddings]
-
-    CONTENT --> TFIDF[TF-IDF Product Features]
-    TFIDF --> SIM[Cosine Similarity]
-
-    USERF --> FUSION[Weighted Score Fusion]
-    ITEMF --> FUSION
-    SIM --> FUSION
-
-    FUSION --> OUTPUT[Top-N Recommendations]
-```
-
----
-
-# Project Structure
+## Repository Structure
 
 ```text
 Hybrid-Recommendation-System/
-
-├── api/
-│   ├── app.py
-│   ├── routes.py
-│   └── schemas.py
-│
-├── src/
-│   ├── inference/
-│   ├── models/
-│   │   ├── als/
-│   │   ├── content/
-│   │   └── hybrid/
-│   └── utils/
-│
-├── artifacts/
-│   Serialized model artifacts and inference assets
-│
-├── configs/
-│   Model and deployment configuration
-│
-├── tests/
-│   Unit and API test suite
-│
-├── evaluation/
-│   Offline evaluation metrics
-│
-├── notebooks/
-│   Exploratory analysis and experimentation
-│
-├── deployment/
-│   Deployment-related configuration
-│
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
+├── api/                     # FastAPI app, routes, schemas
+├── artifacts/               # Serialized models and inference assets
+├── configs/                 # Model and deployment configuration
+├── data/                    # Raw and processed dataset files
+├── deployment/              # Deployment-related configs and frontend assets
+├── docs/                    # Architecture and deployment documentation
+├── evaluation/              # Offline evaluation metrics and reports
+├── notebooks/               # Analysis and experimentation notebooks
+├── requirements.txt         # Python dependencies
+├── docker-compose.yml       # Compose deployment for the API
+├── Dockerfile               # Container image build definition
+└── README.md                # Project overview and setup
 ```
 
----
+## Getting Started
 
-# ML Pipeline
+### Prerequisites
 
-```text
-RetailRocket Dataset
+- Python 3.8+ (recommended)
+- Git
+- Docker (optional, for container deployment)
+- A virtual environment tool such as `venv`
 
-        ↓
+### Install dependencies
 
-Data preprocessing
+From the repository root:
 
-        ↓
-
-User-item interaction matrix
-
-        ↓
-
-ALS Collaborative Filtering
-
-        ↓
-
-Content Feature Engineering
-
-        ↓
-
-TF-IDF Similarity Model
-
-        ↓
-
-Hybrid Score Fusion
-
-        ↓
-
-FastAPI Inference Service
-
-        ↓
-
-Product Recommendations
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
----
+### Run locally with Uvicorn
 
-# Model Details
+Start the API from the repo root:
 
-## ALS Collaborative Filtering
-
-The collaborative filtering component uses **Alternating Least Squares** to learn latent user and item representations.
-
-Configuration:
-
-- Latent factors: `64`
-- Regularization: `0.1`
-- Iterations: `20`
-
-The model learns from implicit user-item interactions such as:
-
-- Product views
-- Add-to-cart events
-- Transactions
-
----
-
-## Content-Based Filtering
-
-The content model recommends products based on item similarity.
-
-Approach:
-
-- Product attributes converted into TF-IDF vectors
-- Cosine similarity used for finding similar products
-- Supports item-based recommendations
-
-For users without available interaction history:
-
-```
-User ID
-   ↓
-ALS seed item
-   ↓
-Content similarity search
-   ↓
-Similar product recommendations
+```powershell
+uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
----
+Once started, the service is available at:
+- `http://localhost:8000/`
+- `http://localhost:8000/api/v1/`
+- `http://localhost:8000/docs`
 
-## Hybrid Recommendation Engine
+### Run with Docker Compose
 
-The hybrid model combines ALS and content recommendations using weighted score fusion.
+Build and start the API container:
 
-Default weights:
-
-```
-ALS Weight       : 0.5
-Content Weight   : 0.5
-```
-
-The final ranking combines:
-
-- Collaborative preference signals
-- Product similarity signals
-
----
-
-# Cold Start Handling
-
-The system supports unknown users.
-
-For new users:
-
-```
-Unknown User
-      ↓
-Popular Item Ranking
-      ↓
-Recommendation List
+```powershell
+docker-compose up --build
 ```
 
-This ensures recommendations are still available when user history is unavailable.
+The API will listen on port `8000`.
 
----
+## API Reference
 
-# Evaluation Results
+### Health Check
 
-| Metric | Result |
-|---|---:|
-| Precision@10 | 0.0100 |
-| Recall@10 | 0.1000 |
-| Hit Rate@10 | 0.1000 |
-| Catalog Coverage | 0.0016 |
+- `GET /api/v1/health`
 
----
-
-# API Documentation
-
-Interactive Swagger documentation:
-
-```
-http://localhost:8000/docs
-```
-
----
-
-## Health Check
-
-### Endpoint
-
-```
-GET /api/v1/health
-```
-
-Response:
+Response example:
 
 ```json
 {
@@ -246,17 +95,156 @@ Response:
 }
 ```
 
----
+### User Recommendation (Hybrid)
 
-## Hybrid Recommendation
+- `GET /api/v1/recommend/{user_id}`
+- Query parameters:
+  - `top_n` (optional, default `10`)
 
-### Endpoint
+Example:
 
+```bash
+curl "http://localhost:8000/api/v1/recommend/42?top_n=10"
 ```
-GET /api/v1/recommend/{user_id}
+
+### Hybrid Recommendation by POST
+
+- `POST /api/v1/recommend/hybrid`
+- `Content-Type: application/json`
+
+Request body:
+
+```json
+{
+  "user_id": 42,
+  "top_n": 10,
+  "weights": {
+    "als": 0.6,
+    "content": 0.4
+  }
+}
 ```
 
-Returns personalized hybrid recommendations for known users.
+### Alias POST endpoint
+
+- `POST /api/v1/predict`
+- Same request body as `/recommend/hybrid`
+
+### ALS-only Recommendations
+
+- `POST /api/v1/recommend/als`
+
+### Content-only Recommendations
+
+- `POST /api/v1/recommend/content`
+
+### Text Search Recommendations
+
+- `POST /api/v1/recommend/search`
+
+Request body:
+
+```json
+{
+  "query": "wireless headphones",
+  "top_n": 10
+}
+```
+
+## API Response Schema
+
+All recommendation responses include:
+- `user_id` (when applicable)
+- `model_used`
+- `recommendations` list
+- `metadata` (optional)
+
+Each recommended item contains:
+- `item_id`
+- `score`
+- `source`
+- optional product metadata fields such as `product_name`, `category`, `brand`, `price`, `image_url`, and `description`
+
+## Data and Artifacts
+
+The service depends on serialized inference assets in `artifacts/` and mapping files under `data/processed/mappings/`.
+
+Ensure the corresponding artifacts are available before starting the API. Mismatched or missing artifact files may prevent model loading.
+
+## Deployment
+
+### Docker
+
+Build the container image:
+
+```bash
+docker build -t hybrid-recommendation-system .
+```
+
+Run it locally:
+
+```bash
+docker run --rm -p 8000:8000 hybrid-recommendation-system
+```
+
+### Docker Compose
+
+Use the provided compose file to mount artifacts and configuration:
+
+```bash
+docker-compose up --build
+```
+
+The compose service includes a health check against `http://127.0.0.1:8000/api/v1/health`.
+
+## Configuration
+
+Environment variables supported by deployment:
+- `LOG_LEVEL` – logging verbosity (`INFO`, `DEBUG`, etc.)
+- `ALLOWED_ORIGINS` – comma-separated CORS origins
+- `APP_HOST` – host binding for Uvicorn
+- `APP_PORT` – service port
+
+The app also reads deployment settings from `configs/deployment_config.yaml`.
+
+## Development
+
+### Run tests
+
+From the repo root:
+
+```powershell
+pytest
+```
+
+### Recommended workflow
+
+1. Activate the virtual environment
+2. Install dependencies
+3. Run tests after code changes
+4. Use `uvicorn` for local API development
+
+## Requirements
+
+Core dependencies are listed in `requirements.txt` and include:
+- `fastapi`
+- `uvicorn`
+- `pydantic`
+- `numpy`
+- `pandas`
+- `scikit-learn`
+- `scipy`
+- `PyYAML`
+
+## Notes
+
+- The API entrypoint is `api/app.py`.
+- The FastAPI router is mounted under `/api/v1`.
+- The project supports both direct Python execution and Docker deployment.
+
+## License
+
+See the `LICENSE` file for license details.
 
 Example:
 

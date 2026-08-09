@@ -8,6 +8,7 @@ from typing import Dict, Any, List
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.inference.recommend import InferenceEngine
+from src.services.product_metadata import get_product_metadata_service
 from .schemas import (
     RecommendationItem,
     UserRecommendationResponse,
@@ -23,6 +24,27 @@ router = APIRouter()
 
 # Global inference engine instance
 _engine: InferenceEngine = None
+_metadata_service = get_product_metadata_service()
+
+
+def _enrich_recommendation_payloads(results, default_source: str = "Hybrid") -> List[Dict[str, Any]]:
+    normalized = []
+    for result in results:
+        if isinstance(result, dict):
+            item_id = int(result.get("item_id"))
+            score = float(result.get("score", 0.0))
+            source = str(result.get("source", default_source))
+        else:
+            item_id, score = result
+            source = default_source
+
+        normalized.append({
+            "item_id": item_id,
+            "score": score,
+            "source": source,
+        })
+
+    return _metadata_service.enrich_recommendations(normalized)
 
 
 def get_inference_engine() -> InferenceEngine:
@@ -54,12 +76,8 @@ def get_recommendations_for_user(
     try:
         results = engine.recommend(user_id=user_id, top_n=top_n)
         recommendation_items = [
-            RecommendationItem(
-                item_id=int(rec["item_id"]),
-                score=float(rec["score"]),
-                source=str(rec["source"])
-            )
-            for rec in results
+            RecommendationItem(**payload)
+            for payload in _enrich_recommendation_payloads(results, default_source="Hybrid")
         ]
         return UserRecommendationResponse(
             user_id=user_id,
@@ -81,7 +99,10 @@ def recommend_hybrid(
             top_n=request.top_n,
             weights=request.weights
         )
-        scores = [ItemScore(item_id=int(item_id), score=float(score)) for item_id, score in results]
+        scores = [
+            ItemScore(**payload)
+            for payload in _enrich_recommendation_payloads(results, default_source="Hybrid")
+        ]
         return RecommendationResponse(
             user_id=request.user_id,
             model_used="HybridRecommender",
@@ -89,6 +110,15 @@ def recommend_hybrid(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/predict", response_model=RecommendationResponse)
+def predict_alias(
+    request: RecommendationRequest,
+    engine: InferenceEngine = Depends(get_inference_engine)
+):
+    """Legacy alias for hybrid recommendations under the API prefix."""
+    return recommend_hybrid(request, engine)
 
 
 @router.post("/recommend/als", response_model=RecommendationResponse)
@@ -101,7 +131,10 @@ def recommend_als(
             user_id=request.user_id,
             top_n=request.top_n
         )
-        scores = [ItemScore(item_id=int(item_id), score=float(score)) for item_id, score in results]
+        scores = [
+            ItemScore(**payload)
+            for payload in _enrich_recommendation_payloads(results, default_source="ALS")
+        ]
         return RecommendationResponse(
             user_id=request.user_id,
             model_used="ALSPredictor",
@@ -121,7 +154,10 @@ def recommend_content(
             user_id=request.user_id,
             top_n=request.top_n
         )
-        scores = [ItemScore(item_id=int(item_id), score=float(score)) for item_id, score in results]
+        scores = [
+            ItemScore(**payload)
+            for payload in _enrich_recommendation_payloads(results, default_source="Content")
+        ]
         return RecommendationResponse(
             user_id=request.user_id,
             model_used="ContentPredictor",
@@ -141,7 +177,10 @@ def recommend_search(
             query=request.query,
             top_n=request.top_n
         )
-        scores = [ItemScore(item_id=int(item_id), score=float(score)) for item_id, score in results]
+        scores = [
+            ItemScore(**payload)
+            for payload in _enrich_recommendation_payloads(results, default_source="Search")
+        ]
         return RecommendationResponse(
             model_used="ContentTextSearch",
             recommendations=scores,

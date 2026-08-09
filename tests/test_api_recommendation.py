@@ -72,7 +72,15 @@ def test_response_schema_validation():
     assert len(json_data["recommendations"]) == 10  # Default top_n = 10
 
     for rec in json_data["recommendations"]:
-        assert set(rec.keys()) == {"item_id", "score", "source"}
+        assert "item_id" in rec
+        assert "score" in rec
+        assert "source" in rec
+        assert "product_name" in rec
+        assert "category" in rec
+        assert "brand" in rec
+        assert "price" in rec
+        assert "image_url" in rec
+        assert "description" in rec
 
 
 if __name__ == "__main__":

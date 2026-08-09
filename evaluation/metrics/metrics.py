@@ -13,6 +13,7 @@ def precision_at_k(recommended: List[int], ground_truth: Set[int], k: int) -> fl
 
 def recall_at_k(recommended: List[int], ground_truth: Set[int], k: int) -> float:
     """Calculates Recall@K for a single user."""
+    
     if not ground_truth or k <= 0:
         return 0.0
     rec_k = recommended[:k]
