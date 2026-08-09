@@ -20,5 +20,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Provision artifacts for CI
+        run: |
+          python scripts/provision_artifacts.py
+        env:
+          ARTIFACT_ARCHIVE_URL: ${{ secrets.ARTIFACT_ARCHIVE_URL }}
+
       - name: Run tests
         run: pytest tests/
